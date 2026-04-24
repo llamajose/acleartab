@@ -1,0 +1,7 @@
+# macOS
+.DS_Store
+.AppleDouble
+.LSOverride
+
+# Large bundled video — load your own background via the settings panel
+image/

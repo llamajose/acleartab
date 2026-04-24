@@ -1,0 +1,20 @@
+{
+  "manifest_version": 3,
+  "name": "Heavy Glass Tab",
+  "version": "1.2",
+  "description": "A glass new tab with video backgrounds, quick links, and 3-day weather.",
+  "chrome_url_overrides": {
+    "newtab": "newtab.html"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "permissions": [
+    "storage",
+    "unlimitedStorage"
+  ],
+  "host_permissions": [
+    "https://wttr.in/*",
+    "https://suggestqueries.google.com/*"
+  ]
+}

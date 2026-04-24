@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>New Tab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- Liquid Glass SVG filter for lensing/refraction -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
+    <defs>
+      <filter id="liquid-glass-filter" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
+        <feTurbulence type="fractalNoise" baseFrequency="0.65 0.65" numOctaves="1" seed="2" result="noise"/>
+        <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
+        <feComposite in="displaced" in2="SourceGraphic" operator="atop"/>
+      </filter>
+    </defs>
+  </svg>
+
+  <div id="bg-container"></div>
+  <div class="dark-overlay"></div>
+
+  <div class="weather-widget glass-panel" id="weather-widget">Loading...</div>
+
+  <main class="center-stage">
+    <div class="clock-widget glass-panel">
+      <h1 id="clock">00:00:00</h1>
+      <p id="date">Day, Month 00</p>
+    </div>
+    <div class="search-wrapper">
+      <form id="search-form">
+        <input type="text" id="search-input" class="glass-panel pill-search" placeholder="Search or type a URL..." autocomplete="off" autofocus>
+      </form>
+      <div id="search-suggestions" class="glass-panel suggestions-dropdown hidden"></div>
+    </div>
+  </main>
+
+  <div class="quick-links" id="quick-links"></div>
+
+  <div class="calendar-widget glass-panel" id="calendar-widget"></div>
+
+  <div class="gear-icon glass-panel" id="gear-icon">⚙️</div>
+
+  <div class="settings-widget glass-panel hidden" id="settings-panel">
+    <div class="settings-header">
+      <span class="settings-title">Settings</span>
+      <button class="settings-close" id="settings-close">✕</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Background</div>
+      <label class="settings-file-label" for="bg-upload">Choose Image or Video</label>
+      <input type="file" id="bg-upload" accept="image/*,video/mp4">
+      <button class="settings-btn settings-btn-destructive" id="reset-bg">Delete Background</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Weather</div>
+      <select id="temp-unit" class="settings-select">
+        <option value="F">Fahrenheit (°F)</option>
+        <option value="C">Celsius (°C)</option>
+      </select>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Add Quick Link</div>
+      <input type="text" id="link-name" class="settings-input" placeholder="Name (e.g., Reddit)">
+      <input type="text" id="link-url" class="settings-input" placeholder="URL (e.g., reddit.com)">
+      <button class="settings-btn settings-btn-primary" id="add-link-btn">Save Link</button>
+    </div>
+
+    <div class="settings-section">
+      <div class="settings-section-label">Remove Quick Link</div>
+      <select id="delete-link-select" class="settings-select"></select>
+      <button class="settings-btn settings-btn-destructive" id="delete-link-btn">Delete</button>
+    </div>
+  </div>
+
+  <script src="weather.js"></script>
+  <script src="calendar.js"></script>
+  <script src="main.js"></script>
+</body>
+</html>
