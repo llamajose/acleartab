@@ -4,10 +4,10 @@
   "version": "1.2",
   "description": "A glass new tab with video backgrounds, quick links, and 3-day weather.",
   "chrome_url_overrides": {
-    "newtab": "newtab.html"
+    "newtab": "src/newtab.html"
   },
   "background": {
-    "service_worker": "background.js"
+    "service_worker": "src/js/background.js"
   },
   "permissions": [
     "storage",
