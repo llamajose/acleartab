@@ -3,26 +3,22 @@ function buildCalendar() {
   const monthName = date.toLocaleString('default', { month: 'long' });
   const year = date.getFullYear();
   const today = date.getDate();
-  const currentMonth = date.getMonth();
+  const month = date.getMonth();
 
-  const daysInMonth = new Date(year, currentMonth + 1, 0).getDate();
-  const startDay = new Date(year, currentMonth, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const startDay = new Date(year, month, 1).getDay();
 
-  let html = `<h3>${monthName} ${year}</h3>`;
-  html += `<div class="calendar-grid">`;
+  let html = `<h3>${monthName} ${year}</h3><div class="calendar-grid">`;
 
-  const dayNames = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
-  for (let day of dayNames) {
-    html += `<div class="day-name">${day}</div>`;
+  for (const name of ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa']) {
+    html += `<div class="day-name">${name}</div>`;
   }
-
   for (let i = 0; i < startDay; i++) {
     html += `<div class="empty-day"></div>`;
   }
-
   for (let i = 1; i <= daysInMonth; i++) {
-    const isToday = (i === today) ? 'today' : '';
-    html += `<div class="day ${isToday}">${i}</div>`;
+    const cls = i === today ? 'today' : (i < today ? 'past' : '');
+    html += `<div class="day ${cls}">${i}</div>`;
   }
 
   html += `</div>`;

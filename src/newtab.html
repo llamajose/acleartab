@@ -10,73 +10,98 @@
 </head>
 <body>
 
-  <!-- Liquid Glass SVG filter for lensing/refraction -->
-  <svg xmlns="http://www.w3.org/2000/svg" width="0" height="0" style="position:absolute">
-    <defs>
-      <filter id="liquid-glass-filter" x="-10%" y="-10%" width="120%" height="120%" color-interpolation-filters="sRGB">
-        <feTurbulence type="fractalNoise" baseFrequency="0.65 0.65" numOctaves="1" seed="2" result="noise"/>
-        <feDisplacementMap in="SourceGraphic" in2="noise" scale="4" xChannelSelector="R" yChannelSelector="G" result="displaced"/>
-        <feComposite in="displaced" in2="SourceGraphic" operator="atop"/>
-      </filter>
-    </defs>
-  </svg>
-
   <div id="bg-container"></div>
   <div class="dark-overlay"></div>
 
-  <div class="weather-widget glass-panel" id="weather-widget">Loading...</div>
+  <aside class="side-column">
+    <div class="weather-widget glass-panel" id="weather-widget">
+      <div class="wx-loading">Loading weather…</div>
+    </div>
+    <div class="calendar-widget glass-panel" id="calendar-widget"></div>
+  </aside>
 
   <main class="center-stage">
-    <div class="clock-widget glass-panel">
-      <h1 id="clock">00:00:00</h1>
-      <p id="date">Day, Month 00</p>
+    <div class="clock">
+      <h1 id="clock">00:00</h1>
+      <p id="date"></p>
     </div>
     <div class="search-wrapper">
       <form id="search-form">
-        <input type="text" id="search-input" class="glass-panel pill-search" placeholder="Search or type a URL..." autocomplete="off" autofocus>
+        <input type="text" id="search-input" class="glass-panel pill-search" placeholder="Search or type a URL…" autocomplete="off" spellcheck="false">
       </form>
       <div id="search-suggestions" class="glass-panel suggestions-dropdown hidden"></div>
     </div>
   </main>
 
-  <div class="quick-links" id="quick-links"></div>
+  <nav class="quick-links" id="quick-links"></nav>
 
-  <div class="calendar-widget glass-panel" id="calendar-widget"></div>
+  <button class="gear-icon glass-panel" id="gear-icon" aria-label="Settings">
+    <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+  </button>
 
-  <div class="gear-icon glass-panel" id="gear-icon">⚙️</div>
-
-  <div class="settings-widget glass-panel hidden" id="settings-panel">
+  <div class="settings-widget glass-panel hidden" id="settings-panel" role="dialog" aria-label="Settings">
     <div class="settings-header">
       <span class="settings-title">Settings</span>
-      <button class="settings-close" id="settings-close">✕</button>
+      <button class="settings-close" id="settings-close" aria-label="Close">✕</button>
     </div>
 
-    <div class="settings-section">
-      <div class="settings-section-label">Background</div>
-      <label class="settings-file-label" for="bg-upload">Choose Image or Video</label>
-      <input type="file" id="bg-upload" accept="image/*,video/mp4">
-      <button class="settings-btn settings-btn-destructive" id="reset-bg">Delete Background</button>
-    </div>
+    <div class="settings-body">
+      <section class="settings-group">
+        <div class="settings-group-label">Clock</div>
+        <div class="settings-card">
+          <label class="settings-row">
+            <span>24-hour time</span>
+            <input type="checkbox" id="opt-24h" class="switch">
+          </label>
+          <label class="settings-row">
+            <span>Show seconds</span>
+            <input type="checkbox" id="opt-seconds" class="switch">
+          </label>
+        </div>
+      </section>
 
-    <div class="settings-section">
-      <div class="settings-section-label">Weather</div>
-      <select id="temp-unit" class="settings-select">
-        <option value="F">Fahrenheit (°F)</option>
-        <option value="C">Celsius (°C)</option>
-      </select>
-    </div>
+      <section class="settings-group">
+        <div class="settings-group-label">Weather</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <span>Units</span>
+            <div class="segmented" id="unit-toggle">
+              <button type="button" data-unit="F">°F</button>
+              <button type="button" data-unit="C">°C</button>
+            </div>
+          </div>
+          <div class="settings-row settings-row-stack">
+            <span>Location</span>
+            <input type="text" id="weather-loc" class="settings-input" placeholder="Automatic (from your IP)">
+          </div>
+        </div>
+      </section>
 
-    <div class="settings-section">
-      <div class="settings-section-label">Add Quick Link</div>
-      <input type="text" id="link-name" class="settings-input" placeholder="Name (e.g., Reddit)">
-      <input type="text" id="link-url" class="settings-input" placeholder="URL (e.g., reddit.com)">
-      <button class="settings-btn settings-btn-primary" id="add-link-btn">Save Link</button>
-    </div>
+      <section class="settings-group">
+        <div class="settings-group-label">Background</div>
+        <div class="settings-card">
+          <div class="settings-row">
+            <span id="bg-status">None</span>
+            <div class="row-actions">
+              <label for="bg-upload" class="chip-btn">Choose…</label>
+              <button type="button" id="reset-bg" class="chip-btn chip-danger">Remove</button>
+            </div>
+          </div>
+          <input type="file" id="bg-upload" accept="image/*,video/mp4,video/webm" hidden>
+        </div>
+      </section>
 
-    <div class="settings-section">
-      <div class="settings-section-label">Remove Quick Link</div>
-      <select id="delete-link-select" class="settings-select"></select>
-      <button class="settings-btn settings-btn-destructive" id="delete-link-btn">Delete</button>
+      <section class="settings-group">
+        <div class="settings-group-label">Quick links</div>
+        <div class="settings-card">
+          <ul class="link-list" id="link-list"></ul>
+          <form class="add-link" id="add-link-form">
+            <input type="text" id="link-name" class="settings-input" placeholder="Name">
+            <input type="text" id="link-url" class="settings-input" placeholder="URL">
+            <button type="submit" class="chip-btn chip-primary">Add</button>
+          </form>
+        </div>
+      </section>
     </div>
   </div>
 

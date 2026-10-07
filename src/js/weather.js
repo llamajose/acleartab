@@ -1,58 +1,88 @@
-const CACHE_TIME = 30 * 60 * 1000; 
+const WEATHER_CACHE_MS = 30 * 60 * 1000;
 
-async function getWeather() {
-  try {
-    const store = await chrome.storage.local.get(['weather', 'time', 'unit']);
-    const now = Date.now();
-    const isF = store.unit !== 'C'; 
-
-    if (store.weather && store.time && (now - store.time < CACHE_TIME)) {
-      showWeather(store.weather, isF);
-      return;
-    }
-
-    const res = await fetch('https://wttr.in/?format=j1');
-    if (!res.ok) throw new Error('Bad link');
-    
-    const data = await res.json();
-    await chrome.storage.local.set({ weather: data, time: now });
-    showWeather(data, isF);
-
-  } catch (err) {
-    document.getElementById('weather-widget').innerText = '⚠️ Offline';
-  }
+function esc(str) {
+  return String(str ?? '').replace(/[&<>"']/g, c => (
+    { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]
+  ));
 }
 
-function getEmoji(text) {
-  if (text.includes('Rain')) return '🌧️';
-  if (text.includes('Cloud')) return '☁️';
-  if (text.includes('Clear') || text.includes('Sunny')) return '☀️';
-  if (text.includes('Snow')) return '❄️';
+// wttr.in descriptions vary in case ("Partly cloudy", "Patchy rain nearby"), so match lowercased.
+function weatherEmoji(desc) {
+  const d = (desc || '').toLowerCase();
+  if (d.includes('thunder')) return '⛈️';
+  if (/(snow|sleet|blizzard|ice pellets)/.test(d)) return '❄️';
+  if (/(rain|drizzle|shower)/.test(d)) return '🌧️';
+  if (/(fog|mist|haze)/.test(d)) return '🌫️';
+  if (d.includes('overcast')) return '☁️';
+  if (d.includes('partly')) return '⛅';
+  if (d.includes('cloud')) return '☁️';
+  if (/(sunny|clear)/.test(d)) return '☀️';
   return '🌤️';
 }
 
-function showWeather(data, isF) {
+function wttrUrl(loc) {
+  const path = loc ? encodeURIComponent(loc).replace(/%20/g, '+') : '';
+  return `https://wttr.in/${path}?format=j1`;
+}
+
+async function getWeather(force = false) {
+  const el = document.getElementById('weather-widget');
+  const store = await chrome.storage.local.get(['weather', 'time', 'unit', 'weatherLoc', 'weatherFor']);
+  const isF = store.unit !== 'C';
+  const loc = (store.weatherLoc || '').trim();
+  const cacheValid = store.weather && store.time
+    && Date.now() - store.time < WEATHER_CACHE_MS
+    && (store.weatherFor || '') === loc;
+
+  if (!force && cacheValid) { showWeather(store.weather, isF); return; }
+
   try {
-    const sym = isF ? '°F' : '°C';
+    const res = await fetch(wttrUrl(loc));
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    await chrome.storage.local.set({ weather: data, time: Date.now(), weatherFor: loc });
+    showWeather(data, isF);
+  } catch (err) {
+    // Fall back to stale data for the same location rather than an empty box.
+    if (store.weather && (store.weatherFor || '') === loc) {
+      showWeather(store.weather, isF, true);
+    } else {
+      el.innerHTML = '<div class="wx-loading">Weather unavailable</div>';
+    }
+  }
+}
+
+function showWeather(data, isF, stale = false) {
+  const el = document.getElementById('weather-widget');
+  try {
+    const u = isF ? 'F' : 'C';
     const cur = data.current_condition[0];
-    const tCur = isF ? cur.temp_F : cur.temp_C;
-    const emCur = getEmoji(cur.weatherDesc[0].value);
+    const desc = cur.weatherDesc[0].value.trim();
+    const area = data.nearest_area && data.nearest_area[0];
+    const place = area ? area.areaName[0].value : '';
+    const today = data.weather[0];
 
-    const d1 = data.weather[1];
-    const t1 = isF ? d1.maxtempF : d1.maxtempC;
-    const em1 = getEmoji(d1.hourly[4].weatherDesc[0].value);
+    const days = data.weather.slice(1, 3).map(d => {
+      const name = new Date(`${d.date}T12:00:00`).toLocaleDateString(undefined, { weekday: 'short' });
+      const icon = weatherEmoji(d.hourly[4].weatherDesc[0].value);
+      return `<div class="wx-day">
+        <span class="wx-dname">${esc(name)}</span>
+        <span class="wx-dicon">${icon}</span>
+        <span class="wx-range">${esc(d['maxtemp' + u])}° <span class="wx-low">${esc(d['mintemp' + u])}°</span></span>
+      </div>`;
+    }).join('');
 
-    const d2 = data.weather[2];
-    const t2 = isF ? d2.maxtempF : d2.maxtempC;
-    const em2 = getEmoji(d2.hourly[4].weatherDesc[0].value);
-
-    document.getElementById('weather-widget').innerHTML = `
-      <div><strong>Now:</strong> ${emCur} ${tCur}${sym}</div>
-      <div style="font-size: 0.9rem; opacity: 0.8;">Tmrw: ${em1} ${t1}${sym}</div>
-      <div style="font-size: 0.9rem; opacity: 0.8;">Next: ${em2} ${t2}${sym}</div>
+    el.innerHTML = `
+      <div class="wx-place">${esc(place)}${stale ? ' · offline' : ''}</div>
+      <div class="wx-now">
+        <span class="wx-temp">${esc(cur['temp_' + u])}°</span>
+        <span class="wx-icon">${weatherEmoji(desc)}</span>
+      </div>
+      <div class="wx-desc">${esc(desc)} · H ${esc(today['maxtemp' + u])}° L ${esc(today['mintemp' + u])}°</div>
+      <div class="wx-days">${days}</div>
     `;
   } catch (e) {
-    document.getElementById('weather-widget').innerText = 'Error';
+    el.innerHTML = '<div class="wx-loading">Weather unavailable</div>';
   }
 }
 
