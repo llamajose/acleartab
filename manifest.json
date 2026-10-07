@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "acleartab",
-  "version": "1.4",
+  "version": "1.5",
   "description": "A Liquid Glass new tab: smart search, Canvas due dates, homelab status, weather, and quick links.",
   "chrome_url_overrides": {
     "newtab": "src/newtab.html"

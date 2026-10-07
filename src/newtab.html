@@ -24,10 +24,14 @@
     <div class="status-strip glass-panel hidden" id="status-strip"></div>
     <div class="canvas-widget glass-panel" id="canvas-widget">
       <div class="widget-head">
-        <span class="widget-title">Due soon</span>
-        <a class="widget-link" href="https://hartnell.instructure.com/calendar" title="Open Canvas calendar">Canvas ↗</a>
+        <div class="widget-tabs" role="tablist">
+          <button type="button" class="widget-tab active" data-tab="due" role="tab">Due soon</button>
+          <button type="button" class="widget-tab" data-tab="grades" role="tab">Grades</button>
+        </div>
+        <a class="widget-link" id="canvas-link" href="https://hartnell.instructure.com/calendar" title="Open Canvas">Canvas ↗</a>
       </div>
       <div class="canvas-list" id="canvas-list"></div>
+      <div class="grades-list hidden" id="grades-list"></div>
     </div>
   </aside>
 
@@ -95,6 +99,11 @@
             <span>Calendar feed URL</span>
             <input type="url" id="canvas-url" class="settings-input" placeholder="https://….instructure.com/feeds/calendars/….ics" spellcheck="false">
             <span class="settings-hint">In Canvas: Calendar → Calendar Feed (bottom right). Keep this private — anyone with it can read your calendar.</span>
+          </div>
+          <div class="settings-row settings-row-stack">
+            <span>Access token <span class="settings-hint">(for grades &amp; missing work)</span></span>
+            <input type="password" id="canvas-token" class="settings-input" placeholder="Paste token" autocomplete="off" spellcheck="false">
+            <span class="settings-hint">Canvas → Account → Settings → New Access Token. Stored only on this computer.</span>
           </div>
           <div class="settings-row">
             <span id="canvas-status" class="settings-hint">Not connected</span>

@@ -61,6 +61,45 @@ function urgency(ms) {
   return h < 24 ? 'urgent' : h < 72 ? 'soon' : '';
 }
 
+function doneButton(id) {
+  const done = el('button', 'canvas-done', '✓');
+  done.type = 'button';
+  done.title = 'Hide';
+  done.addEventListener('click', ev => {
+    ev.preventDefault();
+    ev.stopPropagation();
+    canvasDone.push(id);
+    pruneDone();
+    chrome.storage.local.set({ canvasDone });
+    renderCanvas();
+  });
+  return done;
+}
+
+// Only remember hidden IDs that still exist, so the list doesn't grow forever
+function pruneDone() {
+  const live = new Set();
+  if (canvasData && canvasData.ok) canvasData.events.forEach(e => live.add(e.uid));
+  if (gradesData && gradesData.ok) gradesData.missing.forEach(m => live.add(`missing-${m.id}`));
+  canvasDone = canvasDone.filter(u => live.has(u));
+}
+
+function missingRow(m) {
+  const row = el('a', 'canvas-item missing');
+  row.href = m.url;
+  const chip = el('span', 'canvas-course', shortCourse(m.course));
+  chip.style.setProperty('--hue', courseHue(m.course));
+  chip.title = m.course;
+  const body = el('span', 'canvas-body');
+  const title = el('span', 'canvas-title', m.title);
+  title.title = m.title;
+  const when = m.due ? new Date(m.due).toLocaleDateString(undefined, { month: 'short', day: 'numeric' }) : '';
+  const pts = m.points ? ` · ${m.points} pts` : '';
+  body.append(title, el('span', 'canvas-due', `Missing${when ? ` · was due ${when}` : ''}${pts}`));
+  row.append(chip, body, doneButton(`missing-${m.id}`));
+  return row;
+}
+
 function renderCanvas() {
   canvasList.innerHTML = '';
   const res = canvasData;
@@ -85,13 +124,18 @@ function renderCanvas() {
   const now = Date.now();
   const horizon = now + CANVAS_DAYS * 864e5;
   const upcoming = res.events.filter(e => e.due >= now && e.due <= horizon && !canvasDone.includes(e.uid));
+  const missing = gradesData && gradesData.ok
+    ? gradesData.missing.filter(m => !canvasDone.includes(`missing-${m.id}`))
+    : [];
+
+  missing.forEach(m => canvasList.appendChild(missingRow(m)));
 
   if (!upcoming.length) {
     canvasList.appendChild(el('div', 'canvas-empty', `Nothing due in the next ${CANVAS_DAYS} days`));
     return;
   }
 
-  upcoming.slice(0, CANVAS_MAX).forEach(e => {
+  upcoming.slice(0, Math.max(CANVAS_MAX - missing.length, 3)).forEach(e => {
     const row = el('a', `canvas-item ${urgency(e.due)}`);
     row.href = e.url || 'https://hartnell.instructure.com/calendar';
 
@@ -104,25 +148,12 @@ function renderCanvas() {
     title.title = e.title;
     body.append(title, el('span', 'canvas-due', dueLabel(e.due)));
 
-    const done = el('button', 'canvas-done', '✓');
-    done.type = 'button';
-    done.title = 'Mark done (hides it)';
-    done.addEventListener('click', ev => {
-      ev.preventDefault();
-      ev.stopPropagation();
-      canvasDone.push(e.uid);
-      // Only remember UIDs still in the cached window so the list doesn't grow forever
-      const live = new Set(res.events.map(x => x.uid));
-      canvasDone = canvasDone.filter(u => live.has(u));
-      chrome.storage.local.set({ canvasDone });
-      renderCanvas();
-    });
-
+    const done = doneButton(e.uid);
     row.append(chip, body, done);
     canvasList.appendChild(row);
   });
 
-  const more = upcoming.length - CANVAS_MAX;
+  const more = upcoming.length - Math.max(CANVAS_MAX - missing.length, 3);
   if (more > 0) canvasList.appendChild(el('div', 'canvas-more', `+${more} more in the next ${CANVAS_DAYS} days`));
 }
 
@@ -142,6 +173,97 @@ function updateCanvasStatus() {
     s.textContent = `${n} upcoming · updated ${ago(r.time)}${r.stale ? ' (offline)' : ''}`;
   }
 }
+
+// ─── GRADES ────────────────────────────────────────────────────────
+const gradesList = document.getElementById('grades-list');
+let gradesData = null;
+let activeTab = 'due';
+
+function letterFor(score) {
+  return score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F';
+}
+
+function renderGrades() {
+  gradesList.innerHTML = '';
+  const res = gradesData;
+
+  if (!res || res.reason === 'unset') {
+    const b = el('button', 'canvas-connect', 'Add a Canvas token to see grades');
+    b.type = 'button';
+    b.addEventListener('click', () => {
+      openSettings();
+      const input = document.getElementById('canvas-token');
+      input.scrollIntoView({ block: 'center' });
+      input.focus();
+    });
+    gradesList.appendChild(b);
+    return;
+  }
+  if (!res.ok) {
+    gradesList.appendChild(el('div', 'canvas-empty',
+      res.reason === 'nofeed' ? 'Add your Canvas feed URL first' : `Couldn't load grades: ${res.message || 'error'}`));
+    return;
+  }
+  if (!res.courses.length) {
+    gradesList.appendChild(el('div', 'canvas-empty', 'No graded courses yet'));
+    return;
+  }
+
+  const missingBy = {};
+  res.missing.forEach(m => { missingBy[m.course] = (missingBy[m.course] || 0) + 1; });
+
+  res.courses.forEach(c => {
+    const row = el('a', 'grade-item');
+    row.href = c.url;
+    const letter = c.grade || letterFor(c.score);
+    row.dataset.letter = letter[0];
+
+    const chip = el('span', 'canvas-course', shortCourse(c.code));
+    chip.style.setProperty('--hue', courseHue(c.code));
+    chip.title = c.name;
+
+    const body = el('span', 'canvas-body');
+    const name = el('span', 'canvas-title', c.name);
+    name.title = c.name;
+    const bar = el('span', 'grade-bar');
+    const fill = el('span', 'grade-fill');
+    fill.style.width = `${Math.max(0, Math.min(100, c.score))}%`;
+    bar.appendChild(fill);
+    body.append(name, bar);
+    const miss = missingBy[c.code];
+    if (miss) body.appendChild(el('span', 'grade-missing', `${miss} missing`));
+
+    const score = el('span', 'grade-score');
+    score.append(el('span', 'grade-pct', `${c.score.toFixed(1)}%`), el('span', 'grade-letter', letter));
+
+    row.append(chip, body, score);
+    gradesList.appendChild(row);
+  });
+
+  gradesList.appendChild(el('div', 'canvas-more',
+    `Current score (graded work only) · updated ${ago(res.time)}${res.stale ? ' · offline' : ''}`));
+}
+
+async function loadGrades(force = false) {
+  gradesData = await bgMessage({ type: 'GRADES', force });
+  renderGrades();
+  renderCanvas(); // missing work shows in the Due soon tab
+}
+
+function setTab(tab) {
+  activeTab = tab === 'grades' ? 'grades' : 'due';
+  document.querySelectorAll('.widget-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === activeTab));
+  canvasList.classList.toggle('hidden', activeTab !== 'due');
+  gradesList.classList.toggle('hidden', activeTab !== 'grades');
+  document.getElementById('canvas-link').href = activeTab === 'grades'
+    ? 'https://hartnell.instructure.com/grades'
+    : 'https://hartnell.instructure.com/calendar';
+}
+
+document.querySelectorAll('.widget-tab').forEach(t => t.addEventListener('click', () => {
+  setTab(t.dataset.tab);
+  chrome.storage.local.set({ canvasTab: activeTab });
+}));
 
 // ─── HOMELAB STATUS ────────────────────────────────────────────────
 const statusStrip = document.getElementById('status-strip');
@@ -247,45 +369,67 @@ async function saveCanvasUrl() {
   await chrome.storage.local.set({ canvasUrl: value });
   document.getElementById('canvas-status').textContent = value ? 'Loading…' : 'Not connected';
   loadCanvas(true);
+  loadGrades(true);
 }
 canvasUrlInput.addEventListener('change', saveCanvasUrl);
 canvasUrlInput.addEventListener('keydown', e => { if (e.key === 'Enter') canvasUrlInput.blur(); });
 document.getElementById('canvas-refresh').addEventListener('click', () => {
   document.getElementById('canvas-status').textContent = 'Refreshing…';
   loadCanvas(true);
+  loadGrades(true);
 });
+
+const canvasTokenInput = document.getElementById('canvas-token');
+canvasTokenInput.addEventListener('change', async () => {
+  const value = canvasTokenInput.value.trim();
+  const { canvasToken = '' } = await chrome.storage.local.get('canvasToken');
+  if (value === canvasToken) return;
+  await chrome.storage.local.set({ canvasToken: value });
+  gradesList.innerHTML = '';
+  gradesList.appendChild(el('div', 'canvas-empty', 'Loading grades…'));
+  loadGrades(true);
+});
+canvasTokenInput.addEventListener('keydown', e => { if (e.key === 'Enter') canvasTokenInput.blur(); });
 
 // ─── STARTUP ───────────────────────────────────────────────────────
 // Optional, git-ignored src/config.local.json seeds personal defaults (feed URL, services)
 // on first run, so private URLs never land in the public repo.
 async function seedLocalConfig() {
-  const { localSeeded } = await chrome.storage.local.get('localSeeded');
-  if (localSeeded) return;
+  const SEEDABLE = ['canvasUrl', 'canvasToken', 'services'];
+  const store = await chrome.storage.local.get([...SEEDABLE, 'localSeededKeys']);
+  const seeded = new Set(store.localSeededKeys || []);
+  if (SEEDABLE.every(k => seeded.has(k))) return;
+  let cfg;
   try {
     const res = await fetch(chrome.runtime.getURL('src/config.local.json'));
-    if (res.ok) {
-      const cfg = await res.json();
-      const patch = {};
-      const cur = await chrome.storage.local.get(['canvasUrl', 'services']);
-      if (cfg.canvasUrl && !cur.canvasUrl) patch.canvasUrl = cfg.canvasUrl;
-      if (Array.isArray(cfg.services) && !(cur.services && cur.services.length)) patch.services = cfg.services;
-      await chrome.storage.local.set(patch);
-    }
-  } catch { /* no local config — fine */ }
-  await chrome.storage.local.set({ localSeeded: true });
+    if (!res.ok) return;
+    cfg = await res.json();
+  } catch { return; } // no local config: fine
+  const patch = {};
+  for (const k of SEEDABLE) {
+    if (seeded.has(k) || cfg[k] === undefined) continue;
+    const empty = store[k] === undefined || store[k] === '' || (Array.isArray(store[k]) && !store[k].length);
+    if (empty) patch[k] = cfg[k];
+    seeded.add(k); // seed each key once; clearing it later in Settings sticks
+  }
+  patch.localSeededKeys = [...seeded];
+  await chrome.storage.local.set(patch);
 }
 
 async function initWidgets() {
   await seedLocalConfig();
-  const store = await chrome.storage.local.get(['canvasUrl', 'canvasDone', 'services']);
+  const store = await chrome.storage.local.get(['canvasUrl', 'canvasToken', 'canvasDone', 'services', 'canvasTab']);
   canvasUrlInput.value = store.canvasUrl || '';
+  canvasTokenInput.value = store.canvasToken || '';
+  setTab(store.canvasTab);
   canvasDone = Array.isArray(store.canvasDone) ? store.canvasDone : [];
   services = Array.isArray(store.services) ? store.services : [];
   renderStatus();
   loadCanvas();
+  loadGrades();
   loadStatus();
   setInterval(() => loadStatus(), 2 * 60 * 1000);
-  setInterval(() => { if (!document.hidden) loadCanvas(); }, 10 * 60 * 1000);
+  setInterval(() => { if (!document.hidden) { loadCanvas(); loadGrades(); } }, 10 * 60 * 1000);
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { loadStatus(); renderCanvas(); } });
 }
 initWidgets();

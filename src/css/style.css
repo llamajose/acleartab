@@ -686,6 +686,61 @@ label.settings-row { cursor: pointer; }
 }
 .canvas-connect:hover { background: rgba(255, 255, 255, 0.12); }
 
+/* Tabs in the Canvas card */
+.widget-tabs { display: inline-flex; gap: 2px; background: rgba(0, 0, 0, 0.2); border-radius: 9px; padding: 2px; }
+.widget-tab {
+  border: none;
+  background: transparent;
+  padding: 4px 10px;
+  border-radius: 7px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.widget-tab:hover { opacity: 0.85; }
+.widget-tab.active { background: rgba(255, 255, 255, 0.18); opacity: 1; }
+.widget-head { align-items: center; }
+
+/* Missing work rows */
+.canvas-item.missing::before { background: #ff453a; }
+.canvas-item.missing .canvas-due { color: #ff9f97; opacity: 1; font-weight: 500; }
+
+/* Grades */
+.grades-list { display: flex; flex-direction: column; gap: 2px; }
+.grade-item {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 7px 6px;
+  border-radius: 10px;
+  color: white;
+  text-decoration: none;
+  transition: background 0.15s ease;
+  --grade: #34c759;
+}
+.grade-item:hover { background: rgba(255, 255, 255, 0.09); }
+.grade-item[data-letter="B"] { --grade: #64d2ff; }
+.grade-item[data-letter="C"] { --grade: #ffb340; }
+.grade-item[data-letter="D"], .grade-item[data-letter="F"] { --grade: #ff6b5e; }
+
+.grade-bar { height: 3px; border-radius: 2px; background: rgba(255, 255, 255, 0.12); margin-top: 5px; overflow: hidden; }
+.grade-fill { display: block; height: 100%; border-radius: 2px; background: var(--grade); }
+.grade-missing { font-size: 0.64rem; color: #ff9f97; margin-top: 3px; }
+
+.grade-score { display: flex; align-items: baseline; gap: 6px; flex-shrink: 0; }
+.grade-pct { font-size: 0.8rem; font-variant-numeric: tabular-nums; opacity: 0.85; }
+.grade-letter {
+  min-width: 22px;
+  text-align: center;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--grade);
+}
+
 /* ─── SMART SEARCH EXTRAS ───────────────────────────────────────── */
 .suggestion-icon { width: 18px; display: inline-flex; justify-content: center; align-items: center; }
 .suggestion-icon img { width: 16px; height: 16px; border-radius: 3px; }

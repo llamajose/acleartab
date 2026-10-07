@@ -5,6 +5,7 @@ importScripts('ics.js');
 const CANVAS_TTL = 30 * 60 * 1000;
 const STATUS_TTL = 2 * 60 * 1000;
 const RATES_TTL = 6 * 60 * 60 * 1000;
+const GRADES_TTL = 15 * 60 * 1000;
 
 async function fetchWithTimeout(url, ms = 5000, opts = {}) {
   const ctrl = new AbortController();
@@ -55,6 +56,66 @@ async function canvas(force) {
   }
 }
 
+// --- Canvas grades + missing work (REST API, personal access token) ---
+async function canvasApi(base, token, path) {
+  const res = await fetchWithTimeout(`${base}/api/v1${path}`, 15000, {
+    headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' },
+  });
+  if (res.status === 401) throw new Error('Token rejected (expired or revoked)');
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return res.json();
+}
+
+async function grades(force) {
+  const store = await chrome.storage.local.get(['canvasToken', 'canvasUrl', 'gradesCache', 'gradesTime', 'gradesFor']);
+  const token = (store.canvasToken || '').trim();
+  if (!token) return { ok: false, reason: 'unset' };
+  let base;
+  try { base = new URL(store.canvasUrl).origin; } catch { return { ok: false, reason: 'nofeed' }; }
+
+  const key = base + '|' + token.slice(-6);
+  const fresh = store.gradesCache && store.gradesFor === key && Date.now() - store.gradesTime < GRADES_TTL;
+  if (!force && fresh) return { ok: true, ...store.gradesCache, time: store.gradesTime };
+
+  try {
+    const [courses, missing] = await Promise.all([
+      canvasApi(base, token, '/courses?enrollment_state=active&include[]=total_scores&per_page=50'),
+      canvasApi(base, token, '/users/self/missing_submissions?include[]=course&filter[]=submittable&per_page=50'),
+    ]);
+    const data = {
+      courses: courses
+        .map(c => {
+          const e = (c.enrollments || []).find(x => x.type === 'student') || {};
+          return {
+            id: c.id,
+            code: c.course_code || c.name,
+            name: c.name,
+            score: e.computed_current_score,
+            grade: e.computed_current_grade,
+            url: `${base}/courses/${c.id}/grades`,
+          };
+        })
+        .filter(c => typeof c.score === 'number'), // skip non-graded courses (orientation, transfer help)
+      missing: missing
+        .map(a => ({
+          id: a.id,
+          title: a.name,
+          course: (a.course && (a.course.course_code || a.course.name)) || '',
+          due: a.due_at ? Date.parse(a.due_at) : null,
+          points: a.points_possible,
+          url: a.html_url,
+        }))
+        .sort((a, b) => (b.due || 0) - (a.due || 0)),
+    };
+    const time = Date.now();
+    await chrome.storage.local.set({ gradesCache: data, gradesTime: time, gradesFor: key });
+    return { ok: true, ...data, time };
+  } catch (err) {
+    if (store.gradesCache && store.gradesFor === key) return { ok: true, ...store.gradesCache, time: store.gradesTime, stale: true };
+    return { ok: false, reason: 'error', message: String(err.message || err) };
+  }
+}
+
 // --- Homelab status ---
 async function checkOne(svc) {
   const start = Date.now();
@@ -100,6 +161,7 @@ async function rates(base) {
 const handlers = {
   SUGGEST: m => suggest(m.query).then(suggestions => ({ ok: true, suggestions })),
   CANVAS: m => canvas(!!m.force),
+  GRADES: m => grades(!!m.force),
   STATUS: m => status(!!m.force),
   RATES: m => rates(m.base),
 };
