@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Heavy Glass Tab",
-  "version": "1.3",
-  "description": "A glass new tab with video backgrounds, quick links, and 3-day weather.",
+  "name": "acleartab",
+  "version": "1.4",
+  "description": "A Liquid Glass new tab: smart search, Canvas due dates, homelab status, weather, and quick links.",
   "chrome_url_overrides": {
     "newtab": "src/newtab.html"
   },
@@ -11,10 +11,22 @@
   },
   "permissions": [
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "bookmarks",
+    "history",
+    "favicon"
   ],
   "host_permissions": [
     "https://wttr.in/*",
-    "https://suggestqueries.google.com/*"
+    "https://suggestqueries.google.com/*",
+    "https://api.frankfurter.app/*",
+    "https://*.instructure.com/*",
+    "http://*.ts.net/*",
+    "https://*.ts.net/*",
+    "http://localhost/*",
+    "http://127.0.0.1/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
   ]
 }

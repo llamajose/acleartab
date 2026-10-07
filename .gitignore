@@ -5,3 +5,6 @@
 
 # Large bundled video — load your own background via the settings panel
 image/
+
+# Personal defaults (private feed URLs, tailnet hosts) — never commit
+src/config.local.json

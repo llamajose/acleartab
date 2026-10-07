@@ -20,6 +20,17 @@
     <div class="calendar-widget glass-panel" id="calendar-widget"></div>
   </aside>
 
+  <aside class="left-column">
+    <div class="status-strip glass-panel hidden" id="status-strip"></div>
+    <div class="canvas-widget glass-panel" id="canvas-widget">
+      <div class="widget-head">
+        <span class="widget-title">Due soon</span>
+        <a class="widget-link" href="https://hartnell.instructure.com/calendar" title="Open Canvas calendar">Canvas ↗</a>
+      </div>
+      <div class="canvas-list" id="canvas-list"></div>
+    </div>
+  </aside>
+
   <main class="center-stage">
     <div class="clock">
       <h1 id="clock">00:00</h1>
@@ -27,7 +38,7 @@
     </div>
     <div class="search-wrapper">
       <form id="search-form">
-        <input type="text" id="search-input" class="glass-panel pill-search" placeholder="Search or type a URL…" autocomplete="off" spellcheck="false">
+        <input type="text" id="search-input" class="glass-panel pill-search" placeholder="Search, type a URL, or try !yt, 5 km to mi, 20 usd to eur" autocomplete="off" spellcheck="false">
       </form>
       <div id="search-suggestions" class="glass-panel suggestions-dropdown hidden"></div>
     </div>
@@ -78,6 +89,33 @@
       </section>
 
       <section class="settings-group">
+        <div class="settings-group-label">Canvas</div>
+        <div class="settings-card">
+          <div class="settings-row settings-row-stack">
+            <span>Calendar feed URL</span>
+            <input type="url" id="canvas-url" class="settings-input" placeholder="https://….instructure.com/feeds/calendars/….ics" spellcheck="false">
+            <span class="settings-hint">In Canvas: Calendar → Calendar Feed (bottom right). Keep this private — anyone with it can read your calendar.</span>
+          </div>
+          <div class="settings-row">
+            <span id="canvas-status" class="settings-hint">Not connected</span>
+            <button type="button" id="canvas-refresh" class="chip-btn">Refresh</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="settings-group">
+        <div class="settings-group-label">Homelab status</div>
+        <div class="settings-card">
+          <ul class="link-list" id="service-list"></ul>
+          <form class="add-link" id="add-service-form">
+            <input type="text" id="service-name" class="settings-input" placeholder="Name">
+            <input type="text" id="service-url" class="settings-input" placeholder="http://host:port/health" spellcheck="false">
+            <button type="submit" class="chip-btn chip-primary">Add</button>
+          </form>
+        </div>
+      </section>
+
+      <section class="settings-group">
         <div class="settings-group-label">Background</div>
         <div class="settings-card">
           <div class="settings-row">
@@ -107,6 +145,8 @@
 
   <script src="js/weather.js"></script>
   <script src="js/calendar.js"></script>
+  <script src="js/search.js"></script>
   <script src="js/main.js"></script>
+  <script src="js/widgets.js"></script>
 </body>
 </html>
