@@ -72,6 +72,7 @@ function doneButton(id) {
     pruneDone();
     chrome.storage.local.set({ canvasDone });
     renderCanvas();
+    updateCanvasSummary();
   });
   return done;
 }
@@ -161,6 +162,7 @@ async function loadCanvas(force = false) {
   canvasData = await bgMessage({ type: 'CANVAS', force });
   renderCanvas();
   updateCanvasStatus();
+  updateCanvasSummary();
 }
 
 function updateCanvasStatus() {
@@ -248,7 +250,58 @@ async function loadGrades(force = false) {
   gradesData = await bgMessage({ type: 'GRADES', force });
   renderGrades();
   renderCanvas(); // missing work shows in the Due soon tab
+  updateCanvasSummary();
 }
+
+// ─── COLLAPSE ──────────────────────────────────────────────────────
+// Minimized, the card shrinks to its header plus a one-line summary.
+let canvasCollapsed = false;
+const canvasSummary = document.getElementById('canvas-summary');
+const collapseBtn = document.getElementById('canvas-collapse');
+
+function updateCanvasSummary() {
+  const parts = [];
+  const missing = gradesData && gradesData.ok
+    ? gradesData.missing.filter(m => !canvasDone.includes(`missing-${m.id}`)).length : 0;
+  if (missing) parts.push({ text: `${missing} missing`, cls: 'sum-missing' });
+  if (canvasData && canvasData.ok) {
+    const now = new Date();
+    const endToday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+    const endTomorrow = endToday + 864e5;
+    const live = canvasData.events.filter(e => e.due >= now.getTime() && !canvasDone.includes(e.uid));
+    const today = live.filter(e => e.due < endToday).length;
+    const tomorrow = live.filter(e => e.due >= endToday && e.due < endTomorrow).length;
+    if (today) parts.push({ text: `${today} due today`, cls: 'sum-today' });
+    if (tomorrow) parts.push({ text: `${tomorrow} tomorrow`, cls: '' });
+    if (!today && !tomorrow) {
+      const next = live[0];
+      parts.push({ text: next ? `Next: ${dueLabel(next.due)}` : 'Nothing due soon', cls: '' });
+    }
+  }
+  canvasSummary.innerHTML = '';
+  parts.forEach((p, i) => {
+    if (i) canvasSummary.appendChild(el('span', 'sum-sep', '·'));
+    canvasSummary.appendChild(el('span', p.cls, p.text));
+  });
+}
+
+function setCollapsed(on) {
+  canvasCollapsed = !!on;
+  canvasWidget.classList.toggle('collapsed', canvasCollapsed);
+  canvasSummary.classList.toggle('hidden', !canvasCollapsed);
+  collapseBtn.setAttribute('aria-expanded', String(!canvasCollapsed));
+  collapseBtn.title = canvasCollapsed ? 'Expand' : 'Minimize';
+  updateCanvasSummary();
+}
+
+collapseBtn.addEventListener('click', () => {
+  setCollapsed(!canvasCollapsed);
+  chrome.storage.local.set({ canvasCollapsed });
+});
+canvasSummary.addEventListener('click', () => {
+  setCollapsed(false);
+  chrome.storage.local.set({ canvasCollapsed: false });
+});
 
 function setTab(tab) {
   activeTab = tab === 'grades' ? 'grades' : 'due';
@@ -261,6 +314,7 @@ function setTab(tab) {
 }
 
 document.querySelectorAll('.widget-tab').forEach(t => t.addEventListener('click', () => {
+  if (canvasCollapsed) { setCollapsed(false); chrome.storage.local.set({ canvasCollapsed: false }); }
   setTab(t.dataset.tab);
   chrome.storage.local.set({ canvasTab: activeTab });
 }));
@@ -418,10 +472,11 @@ async function seedLocalConfig() {
 
 async function initWidgets() {
   await seedLocalConfig();
-  const store = await chrome.storage.local.get(['canvasUrl', 'canvasToken', 'canvasDone', 'services', 'canvasTab']);
+  const store = await chrome.storage.local.get(['canvasUrl', 'canvasToken', 'canvasDone', 'services', 'canvasTab', 'canvasCollapsed']);
   canvasUrlInput.value = store.canvasUrl || '';
   canvasTokenInput.value = store.canvasToken || '';
   setTab(store.canvasTab);
+  setCollapsed(store.canvasCollapsed);
   canvasDone = Array.isArray(store.canvasDone) ? store.canvasDone : [];
   services = Array.isArray(store.services) ? store.services : [];
   renderStatus();

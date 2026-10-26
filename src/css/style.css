@@ -474,6 +474,7 @@ label.settings-row { cursor: pointer; }
 }
 .settings-input::placeholder { color: rgba(255, 255, 255, 0.4); }
 .settings-input:focus { background: rgba(0, 0, 0, 0.28); box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2); }
+.settings-input.masked { -webkit-text-security: disc; }
 .settings-input.invalid { border-color: rgba(255, 110, 110, 0.7); }
 
 /* Chip buttons */
@@ -653,7 +654,7 @@ label.settings-row { cursor: pointer; }
 
 .canvas-body { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .canvas-title { font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.canvas-due { font-size: 0.68rem; opacity: 0.55; margin-top: 1px; }
+.canvas-due { font-size: 0.68rem; opacity: 0.55; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .canvas-item.urgent .canvas-due { color: #ffb0a8; opacity: 0.95; }
 .canvas-item.soon .canvas-due { color: #ffd59a; opacity: 0.85; }
 
@@ -739,6 +740,158 @@ label.settings-row { cursor: pointer; }
   font-size: 0.78rem;
   font-weight: 700;
   color: var(--grade);
+}
+
+/* ─── CANVAS COLLAPSE ───────────────────────────────────────────── */
+.widget-actions { display: flex; align-items: center; gap: 6px; }
+
+.collapse-btn {
+  width: 24px;
+  height: 24px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 7px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: background 0.15s ease, opacity 0.15s ease;
+}
+.collapse-btn:hover { background: rgba(255, 255, 255, 0.14); opacity: 1; }
+.collapse-btn svg { transition: transform 0.25s cubic-bezier(0.34, 1.4, 0.64, 1); }
+.canvas-widget.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+.canvas-widget.collapsed { padding-bottom: 12px; }
+.canvas-widget.collapsed .widget-head { padding-bottom: 6px; }
+.canvas-widget.collapsed .canvas-list,
+.canvas-widget.collapsed .grades-list { display: none; }
+.canvas-widget.collapsed .widget-tab.active { background: transparent; opacity: 0.55; }
+
+.canvas-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 4px;
+  font-size: 0.76rem;
+  opacity: 0.85;
+  cursor: pointer;
+}
+.canvas-summary .sum-sep { opacity: 0.35; }
+.canvas-summary .sum-missing { color: #ff9f97; font-weight: 600; }
+.canvas-summary .sum-today { color: #ffd59a; font-weight: 600; }
+
+/* ─── ASSISTANTS ────────────────────────────────────────────────── */
+.ai-launcher { padding: 14px 12px 12px; }
+.ai-launcher .widget-head { padding-bottom: 10px; }
+
+.ai-tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+.ai-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 12px 11px;
+  text-decoration: none;
+  overflow: hidden;
+  isolation: isolate;
+  transition: transform 0.22s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.22s ease;
+}
+.ai-tile:hover { transform: translateY(-2px); }
+.ai-tile img { width: 20px; height: 20px; border-radius: 5px; margin-bottom: 8px; }
+
+/* Gemini — Google-style liquid glass: bright frosted fill, rounded Material corners,
+   blue → purple → rose gradient rim and a soft colored glow */
+.ai-gemini {
+  --g1: #4285f4; --g2: #9b72cb; --g3: #d96570;
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(66, 133, 244, 0.28), transparent 60%),
+    radial-gradient(120% 90% at 100% 100%, rgba(217, 101, 112, 0.24), transparent 60%),
+    rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(24px) saturate(200%);
+  -webkit-backdrop-filter: blur(24px) saturate(200%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.45),
+    0 6px 20px rgba(66, 133, 244, 0.18),
+    0 2px 6px rgba(0, 0, 0, 0.2);
+  color: #fff;
+}
+/* The global * rule sets Inter on every element, so the brand fonts must target descendants too */
+.ai-gemini, .ai-gemini * { font-family: 'Google Sans', 'Roboto', system-ui, sans-serif; }
+.ai-claude .ai-name, .ai-claude .ai-sub { font-family: 'Newsreader', Georgia, 'Times New Roman', serif; }
+/* Gradient rim (masked 1.5px ring) */
+.ai-gemini::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: linear-gradient(135deg, var(--g1), var(--g2) 50%, var(--g3));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0.85;
+  pointer-events: none;
+}
+/* Light sweep on hover */
+.ai-gemini::after {
+  content: '';
+  position: absolute;
+  inset: -40%;
+  background: linear-gradient(115deg, transparent 40%, rgba(255, 255, 255, 0.28) 50%, transparent 60%);
+  transform: translateX(-60%);
+  transition: transform 0.7s ease;
+  pointer-events: none;
+  z-index: -1;
+}
+.ai-gemini:hover::after { transform: translateX(60%); }
+.ai-gemini:hover { box-shadow: inset 0 1px 0 rgba(255,255,255,0.5), 0 10px 28px rgba(155, 114, 203, 0.32), 0 2px 6px rgba(0,0,0,0.2); }
+.ai-gemini .ai-name {
+  font-size: 1rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  background: linear-gradient(90deg, #a8c7fa, #d7aefb 55%, #f6aea9);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+.ai-gemini .ai-sub { font-size: 0.68rem; opacity: 0.7; letter-spacing: 0.01em; }
+
+/* Claude — warm editorial: cream paper, serif type, terracotta rule, tighter corners */
+.ai-claude {
+  border-radius: 10px;
+  background:
+    linear-gradient(180deg, rgba(250, 246, 238, 0.94), rgba(240, 232, 218, 0.92));
+  border: 1px solid rgba(120, 90, 60, 0.25);
+  box-shadow: 0 6px 18px rgba(60, 35, 15, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  color: #2b2520;
+}
+.ai-claude::before {
+  content: '';
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  top: 0;
+  height: 3px;
+  background: #d97757;
+  border-radius: 0 0 2px 2px;
+}
+.ai-claude:hover { box-shadow: 0 10px 26px rgba(60, 35, 15, 0.36), inset 0 1px 0 rgba(255,255,255,0.7); }
+.ai-claude .ai-name {
+  font-family: 'Newsreader', Georgia, 'Times New Roman', serif;
+  font-size: 1.15rem;
+  font-weight: 500;
+  letter-spacing: -0.01em;
+  line-height: 1.1;
+}
+.ai-claude .ai-sub {
+  font-family: 'Newsreader', Georgia, serif;
+  font-style: italic;
+  font-size: 0.74rem;
+  color: #8a5a3c;
 }
 
 /* ─── SMART SEARCH EXTRAS ───────────────────────────────────────── */
