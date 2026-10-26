@@ -108,8 +108,59 @@ function setMedia(dataUrl, type) {
     bgStatus.textContent = 'Custom image';
   }
   el.className = 'bg-media';
+  el.addEventListener(el.tagName === 'VIDEO' ? 'loadeddata' : 'load', () => detectWallpaperTone(el), { once: true });
   bgContainer.appendChild(el);
 }
+
+// --- 4b. TEXT COLOR (auto / white / black) ---
+const textToggle = document.getElementById('text-color-toggle');
+let textColor = 'auto';   // user's choice
+let autoBlack = false;    // what Auto decided for the current wallpaper
+
+function applyTextColor() {
+  const black = textColor === 'black' || (textColor === 'auto' && autoBlack);
+  document.body.classList.toggle('theme-dark', black);
+  textToggle.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.text === textColor));
+}
+
+// Average brightness of the wallpaper as it is actually shown (object-fit: cover),
+// over the top 70% of the screen where the clock, search and widgets sit.
+function measureLuminance(el) {
+  const sw = el.videoWidth || el.naturalWidth, sh = el.videoHeight || el.naturalHeight;
+  if (!sw || !sh) return null;
+  const vw = window.innerWidth || 1600, vh = window.innerHeight || 900;
+  const scale = Math.max(vw / sw, vh / sh);
+  const cw = vw / scale, ch = vh / scale;
+  const w = 64, h = 36, rows = Math.round(h * 0.7);
+  const canvas = document.createElement('canvas');
+  canvas.width = w; canvas.height = h;
+  const ctx = canvas.getContext('2d', { willReadFrequently: true });
+  ctx.drawImage(el, (sw - cw) / 2, (sh - ch) / 2, cw, ch, 0, 0, w, h);
+  const px = ctx.getImageData(0, 0, w, rows).data;
+  const lin = v => { v /= 255; return v <= 0.04045 ? v / 12.92 : Math.pow((v + 0.055) / 1.055, 2.4); };
+  let sum = 0;
+  for (let i = 0; i < px.length; i += 4) sum += 0.2126 * lin(px[i]) + 0.7152 * lin(px[i + 1]) + 0.0722 * lin(px[i + 2]);
+  return sum / (px.length / 4);
+}
+
+function detectWallpaperTone(el) {
+  let lum = null;
+  try { lum = measureLuminance(el); } catch (_) { /* unreadable frame — keep the last answer */ }
+  if (lum === null) return;
+  // The page dims the wallpaper by 20%. Black text beats white once the dimmed
+  // background passes ~0.18 relative luminance (the WCAG contrast crossover).
+  autoBlack = lum * 0.8 > 0.18;
+  chrome.storage.local.set({ autoTextBlack: autoBlack }); // remembered so the next tab opens in the right colors
+  applyTextColor();
+}
+
+textToggle.addEventListener('click', (e) => {
+  const btn = e.target.closest('button[data-text]');
+  if (!btn) return;
+  textColor = btn.dataset.text;
+  chrome.storage.local.set({ textColor });
+  applyTextColor();
+});
 
 // Pause the video when the tab isn't visible — saves battery
 document.addEventListener('visibilitychange', () => {
@@ -135,6 +186,9 @@ document.getElementById('bg-upload').addEventListener('change', (e) => {
 document.getElementById('reset-bg').addEventListener('click', () => {
   chrome.storage.local.remove(['savedBg', 'bgType']);
   setMedia(null);
+  autoBlack = false; // the built-in dark gradient wants white text
+  chrome.storage.local.set({ autoTextBlack: false });
+  applyTextColor();
 });
 
 // --- 5. QUICK LINKS ---
@@ -255,8 +309,12 @@ document.addEventListener('keydown', (e) => {
 // --- 7. STARTUP ---
 async function init() {
   const store = await chrome.storage.local.get([
-    'savedBg', 'bgType', 'unit', 'quickLinks', 'clock24', 'showSeconds', 'weatherLoc'
+    'savedBg', 'bgType', 'unit', 'quickLinks', 'clock24', 'showSeconds', 'weatherLoc',
+    'textColor', 'autoTextBlack'
   ]);
+  if (['auto', 'white', 'black'].includes(store.textColor)) textColor = store.textColor;
+  autoBlack = !!store.savedBg && store.autoTextBlack === true;
+  applyTextColor();
   if (typeof store.clock24 === 'boolean') prefs.clock24 = store.clock24;
   if (typeof store.showSeconds === 'boolean') prefs.showSeconds = store.showSeconds;
   opt24h.checked = prefs.clock24;

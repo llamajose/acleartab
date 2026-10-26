@@ -926,3 +926,100 @@ label.settings-row { cursor: pointer; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+
+/* ─── BLACK TEXT THEME (light wallpapers) ───────────────────────────
+   body.theme-dark is set by the Text color setting (or Auto). The glass turns into
+   brighter frosted panels so black text keeps its contrast. The settings panel keeps
+   its own dark glass and white text. */
+body.theme-dark {
+  --text-color: #15171c;
+  --glass-bg: rgba(255, 255, 255, 0.32);
+  --glass-bg-hover: rgba(255, 255, 255, 0.42);
+  --glass-border-top: rgba(255, 255, 255, 0.85);
+  --glass-border-side: rgba(255, 255, 255, 0.45);
+  --glass-border-bottom: rgba(255, 255, 255, 0.2);
+  --glass-shadow:
+    0 2px 0 0 rgba(255, 255, 255, 0.5) inset,
+    0 8px 32px rgba(0, 0, 0, 0.10),
+    0 2px 8px rgba(0, 0, 0, 0.06);
+}
+.theme-dark .settings-widget { --text-color: #ffffff; color: #ffffff; }
+.theme-dark .dark-overlay { background: rgba(255, 255, 255, 0.12); }
+
+.theme-dark .clock { text-shadow: 0 1px 24px rgba(255, 255, 255, 0.55), 0 0 2px rgba(255, 255, 255, 0.35); }
+
+.theme-dark .pill-search { color: var(--text-color); }
+.theme-dark .pill-search::placeholder { color: rgba(0, 0, 0, 0.45); }
+.theme-dark .pill-search:focus { background: rgba(255, 255, 255, 0.5); box-shadow: var(--glass-shadow), 0 0 0 2.5px rgba(0, 0, 0, 0.12); }
+.theme-dark .suggestions-dropdown { background: rgba(255, 255, 255, 0.6); }
+.theme-dark .suggestion-item { color: rgba(0, 0, 0, 0.85); }
+.theme-dark .suggestion-item:hover { background: rgba(0, 0, 0, 0.06); color: var(--text-color); }
+.theme-dark .suggestion-item.active { background: rgba(0, 0, 0, 0.09); color: var(--text-color); }
+
+.theme-dark .wx-days { border-top-color: rgba(0, 0, 0, 0.08); }
+.theme-dark .day.today { background: rgba(255, 255, 255, 0.75); border-color: rgba(0, 0, 0, 0.12); box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08); }
+
+.theme-dark .quick-link-item { background: rgba(255, 255, 255, 0.45); }
+.theme-dark .quick-link-item:hover { box-shadow: 0 2px 0 0 rgba(255, 255, 255, 0.6) inset, 0 12px 32px rgba(0, 0, 0, 0.16), 0 4px 10px rgba(0, 0, 0, 0.1); }
+.theme-dark .gear-icon { color: rgba(0, 0, 0, 0.65); }
+.theme-dark .gear-icon:hover { color: var(--text-color); }
+
+.theme-dark .status-item { color: rgba(0, 0, 0, 0.78); }
+.theme-dark .status-item:hover { background: rgba(0, 0, 0, 0.06); color: var(--text-color); }
+.theme-dark .status-dot { background: rgba(0, 0, 0, 0.25); }
+.theme-dark .up .status-dot, .theme-dark .status-dot.up { background: #28a745; box-shadow: 0 0 5px rgba(40, 167, 69, 0.5); }
+.theme-dark .down .status-dot, .theme-dark .status-dot.down { background: #e5372a; box-shadow: 0 0 5px rgba(229, 55, 42, 0.5); }
+
+.theme-dark .widget-link { color: rgba(0, 0, 0, 0.5); }
+.theme-dark .widget-link:hover { color: var(--text-color); }
+.theme-dark .widget-tabs { background: rgba(0, 0, 0, 0.07); }
+.theme-dark .widget-tab.active { background: rgba(255, 255, 255, 0.8); }
+.theme-dark .collapse-btn:hover { background: rgba(0, 0, 0, 0.07); }
+
+.theme-dark .canvas-item { color: var(--text-color); }
+.theme-dark .canvas-item:hover { background: rgba(0, 0, 0, 0.05); }
+.theme-dark .canvas-item.urgent::before { background: #e5372a; }
+.theme-dark .canvas-item.soon::before { background: #e08a00; }
+.theme-dark .canvas-course { color: hsl(var(--hue) 70% 27%); background: hsl(var(--hue) 65% 50% / 0.16); }
+.theme-dark .canvas-item.urgent .canvas-due { color: #c4291c; opacity: 1; }
+.theme-dark .canvas-item.soon .canvas-due { color: #925300; opacity: 1; }
+.theme-dark .canvas-item.missing .canvas-due { color: #c8170b; }
+.theme-dark .canvas-done { border-color: rgba(0, 0, 0, 0.15); background: rgba(255, 255, 255, 0.45); }
+.theme-dark .canvas-connect { border-color: rgba(0, 0, 0, 0.25); background: rgba(255, 255, 255, 0.3); }
+.theme-dark .canvas-connect:hover { background: rgba(255, 255, 255, 0.5); }
+.theme-dark .canvas-summary .sum-missing { color: #c8170b; }
+.theme-dark .canvas-summary .sum-today { color: #925300; }
+
+.theme-dark .grade-item { color: var(--text-color); --grade: #1e8e3e; }
+.theme-dark .grade-item:hover { background: rgba(0, 0, 0, 0.05); }
+.theme-dark .grade-item[data-letter="B"] { --grade: #0b6bbf; }
+.theme-dark .grade-item[data-letter="C"] { --grade: #a86200; }
+.theme-dark .grade-item[data-letter="D"], .theme-dark .grade-item[data-letter="F"] { --grade: #c8170b; }
+.theme-dark .grade-bar { background: rgba(0, 0, 0, 0.1); }
+.theme-dark .grade-missing { color: #c8170b; }
+
+.theme-dark .ai-gemini {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(66, 133, 244, 0.22), transparent 60%),
+    radial-gradient(120% 90% at 100% 100%, rgba(217, 101, 112, 0.18), transparent 60%),
+    rgba(255, 255, 255, 0.5);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 6px 20px rgba(66, 133, 244, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+  color: #1f1f1f;
+}
+.theme-dark .ai-gemini .ai-name { background-image: linear-gradient(90deg, #1a66d9, #7f45c4 55%, #c9404f); }
+.theme-dark .ai-claude {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(217, 119, 87, 0.16), transparent 60%),
+    rgba(255, 255, 255, 0.42);
+  border-color: rgba(255, 255, 255, 0.55);
+  border-top-color: rgba(255, 255, 255, 0.9);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 6px 18px rgba(0, 0, 0, 0.08);
+  color: #2a1f17;
+}
+.theme-dark .ai-claude:hover {
+  background:
+    radial-gradient(120% 90% at 0% 0%, rgba(217, 119, 87, 0.22), transparent 60%),
+    rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 10px 24px rgba(0, 0, 0, 0.12);
+}
+.theme-dark .ai-claude .ai-sub { color: #b0502c; }
