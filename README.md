@@ -2,6 +2,8 @@
 
 A Chrome new tab extension with an Apple Liquid Glass aesthetic — minimal, clean, and transparent.
 
+![acleartab new tab page](docs/screenshot.jpg)
+
 ## Features
 
 - **Liquid Glass UI** — translucent panels with specular highlights, lensing refraction, and caustic glows inspired by Apple's Liquid Glass design language
