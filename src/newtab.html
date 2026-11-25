@@ -54,6 +54,26 @@
       <div class="canvas-list" id="canvas-list"></div>
       <div class="grades-list hidden" id="grades-list"></div>
     </div>
+    <div class="pkg-widget glass-panel" id="pkg-widget">
+      <div class="widget-head">
+        <span class="widget-title">Packages</span>
+        <div class="widget-actions">
+          <span class="pkg-count" id="pkg-count"></span>
+          <button type="button" class="collapse-btn" id="pkg-collapse" title="Minimize" aria-expanded="true">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>
+          </button>
+        </div>
+      </div>
+      <ul class="pkg-list" id="pkg-list"></ul>
+      <form class="pkg-add" id="pkg-add" autocomplete="off">
+        <div class="pkg-number-wrap">
+          <input type="text" class="pkg-input" id="pkg-number" placeholder="Paste a tracking number" spellcheck="false" aria-label="Tracking number">
+          <span class="pkg-carrier pkg-detect hidden" id="pkg-detect"></span>
+        </div>
+        <input type="text" class="pkg-input pkg-name-input" id="pkg-name" placeholder="Name it (optional)" maxlength="40" aria-label="Package name">
+        <button type="submit" class="pkg-add-btn">Add</button>
+      </form>
+    </div>
   </aside>
 
   <main class="center-stage">
@@ -186,5 +206,6 @@
   <script src="js/search.js"></script>
   <script src="js/main.js"></script>
   <script src="js/widgets.js"></script>
+  <script src="js/packages.js"></script>
 </body>
 </html>

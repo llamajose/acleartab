@@ -32,6 +32,7 @@ Vanilla JS, HTML, CSS — no frameworks or build tools. Chrome Extension Manifes
 - **Canvas due dates** — paste your Canvas calendar feed URL (Canvas → Calendar → Calendar Feed) in Settings. Shows what's due in the next 14 days with urgency colors; ✓ hides an item.
 - **Canvas grades & missing work** — add a Canvas access token (Account → Settings → New Access Token). A Grades tab shows each course's current score and letter; missing assignments are pinned in red at the top of Due soon. The token is stored only in `chrome.storage.local`.
 - **Homelab status** — add any HTTP endpoint in Settings (e.g. `http://nas.tailnet.ts.net:2283/api/server/ping`) and get live up/down dots. `*.ts.net`, `localhost` and `127.0.0.1` are pre-approved; other hosts ask for permission when added.
+- **Packages** — paste a tracking number into the Packages card (or the search bar) and it detects the carrier from the number's format (UPS, USPS, FedEx, DHL, Amazon, OnTrac; anything else opens on 17TRACK). Each row links to the carrier's tracking page; ✓ removes it, and packages clear themselves after 60 days. No API key, nothing leaves the browser.
 - Weather, calendar, clock, quick links, custom image/video background.
 
 ### Private defaults

@@ -316,6 +316,20 @@ function syncItems(text) {
     return out;
   }
 
+  // Tracking numbers: open the carrier's page, or keep it in the Packages card
+  const pkg = window.acleartabPackages && window.acleartabPackages.match(trimmed);
+  if (pkg) {
+    out.push({
+      kind: 'pkg', glyph: '📦', label: `Track ${pkg.carrierName} package`, sub: pkg.number,
+      run: () => { window.location.href = pkg.url; },
+    });
+    out.push({
+      kind: 'pkg', glyph: '+', label: 'Add to Packages', sub: pkg.carrierName,
+      run: () => { window.acleartabPackages.add(pkg.number); clearTimeout(debounceTimer); queryToken++; searchInput.value = ''; typedValue = ''; hideSuggestions(); },
+    });
+    return out;
+  }
+
   const b = parseBang(trimmed);
   if (b) {
     out.push({
